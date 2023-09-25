@@ -2,7 +2,7 @@
 #'
 #'import_amp() tidies the "Amplification Data" sheet of an .xls file produced by QuantStudio Design & Analysis Software v1.5.2 or StepOne Software v2.3.
 #'
-#' @param file character vector of length 1. Path to the .xls file containing qPCR results.
+#' @param file character vector of length 1. Path to the .xls file containing the qPCR results to import.
 #' @param from character vector of length 1. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".
 #'
 #' @return A tibble with 4 columns: "well_position", "sample_id", "tar_nm", "cycle", "rn", and "delta_rn".

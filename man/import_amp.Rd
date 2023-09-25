@@ -7,7 +7,7 @@
 import_amp(file, from = "QuantStudio")
 }
 \arguments{
-\item{file}{character vector of length 1. Path to the .xls file containing qPCR results.}
+\item{file}{character vector of length 1. Path to the .xls file containing the qPCR results to import.}
 
 \item{from}{character vector of length 1. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".}
 }
