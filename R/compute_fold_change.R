@@ -4,7 +4,7 @@
 #'
 #' @param data data.frame / tibble. Must contain the columns group_var, "tar_nm" and ct_var.
 #' @param group_var character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".
-#' @param ct_var character vector of length 1. Name of the column containing the Ct values. Default is "mean_id".
+#' @param ct_var character vector of length 1. Name of the column containing the Ct values. Default is "mean_ct".
 #' @param ref_nm character vector. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.
 #' @param cal_nm character vector of length 1. Name of the sample to use as calibrator. Must be in the group_var column of the input data.frame.
 #' @param method character vector of length 1. Indicates which method to use for computation of gene expression fold changes. Valid values are "ddct" or "Pfaffl".
