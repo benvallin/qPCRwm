@@ -13,12 +13,6 @@
 #'
 import_amp <- function(file, from = "QuantStudio") {
 
-  # Capture user's arguments
-
-  file <- eval(substitute(file))
-
-  from <- eval(substitute(from))
-
   # Stop execution in case of invalid input
 
   if (!requireNamespace("readxl", quietly = TRUE)) {

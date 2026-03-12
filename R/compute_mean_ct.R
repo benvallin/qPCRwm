@@ -14,14 +14,6 @@
 #'
 compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) {
 
-  # Capture user's arguments
-
-  data <- eval(substitute(data))
-
-  group_var <- eval(substitute(group_var))
-
-  use_geomean <- eval(substitute(use_geomean))
-
   # Stop execution in case of invalid input
 
   if(!is.character(group_var) ||

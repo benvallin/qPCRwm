@@ -26,28 +26,6 @@ compute_fold_change <- function(data,
                                 use_geomean = FALSE,
                                 efficiencies = NULL) {
 
-  # Capture user's arguments
-
-  data <- eval(substitute(data))
-
-  group_var <- eval(substitute(group_var))
-
-  ct_var <- eval(substitute(ct_var))
-
-  ref_nm <- eval(substitute(ref_nm))
-
-  cal_nm <- eval(substitute(cal_nm))
-
-  method <- eval(substitute(method))
-
-  use_geomean <- eval(substitute(use_geomean))
-
-  efficiencies <- eval(substitute(efficiencies))
-
-  # Determine if quantification includes a single or multiple reference gene(s)
-
-  multi_ref_nm <- ifelse(length(ref_nm) > 1L, TRUE, FALSE)
-
   # Stop execution in case of invalid input
 
   if (length(group_var) != 1 || !is.character(group_var)) {
@@ -135,20 +113,24 @@ compute_fold_change <- function(data,
          call. = FALSE)
   }
 
+  # Determine if quantification includes a single or multiple reference gene(s)
+
+  multi_ref_nm <- ifelse(length(ref_nm) > 1L, TRUE, FALSE)
+
   # Message in case of ignored argument
 
   if (method == "ddct" && !is.null(efficiencies)) {
-    message("\nThe \"ddct\" method is incompatible with primer-specific efficiencies.\nProvided efficiencies will be ignored.",
+    message("The \"ddct\" method is incompatible with primer-specific efficiencies.\nProvided efficiencies will be ignored.",
             call. = FALSE)
   }
 
   if (use_geomean && !multi_ref_nm) {
-    message("\nThe use_geomean argument serves only in case of multiple reference genes.\nuse_geomean = TRUE will be ignored.",
+    message("The use_geomean argument serves only in case of multiple reference genes.\nuse_geomean = TRUE will be ignored.",
             call. = FALSE)
   }
 
   if (use_geomean && multi_ref_nm && method == "Pfaffl") {
-    message("\nThe use_geomean argument is not used by the \"Pfaffl\" method (does not compute the mean of multiple reference genes Ct values).\nuse_geomean = TRUE will be ignored.",
+    message("The use_geomean argument is not used by the \"Pfaffl\" method (does not compute the mean of multiple reference genes Ct values).\nuse_geomean = TRUE will be ignored.",
             call. = FALSE)
   }
 
