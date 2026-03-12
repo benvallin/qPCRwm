@@ -10,21 +10,19 @@
 #'
 #' @export
 #'
-#' @importFrom stats setNames
-#' @importFrom stats na.omit
-#' @importFrom stats sd
-#'
 #' @examples
 #'
 compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) {
 
   # Capture user's arguments
 
-  data <- eval(expr = substitute(data), envir = parent.frame())
+  data <- eval(substitute(data))
 
-  group_var <- eval(expr = substitute(group_var), envir = parent.frame())
+  group_var <- substitute(group_var)
 
-  use_geomean <- eval(expr = substitute(use_geomean), envir = parent.frame())
+  group_var <- if(is.symbol(group_var)) deparse(group_var) else eval(group_var)
+
+  use_geomean <- eval(substitute(use_geomean))
 
   # Stop execution in case of invalid input
 
@@ -53,26 +51,26 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
                       each = length(unique(data[[group_var]])))
 
   # Construct ct_data
-  # => Compute arithmetic / geometric mean and SD of Ct values across technical replicates
+  # => Compute arithmetic / geometric mean and stats::sd of Ct values across technical replicates
 
   ct_data <- data[, c(group_var, "tar_nm", "ct")]
 
   ct_data <- split(x = ct_data, f = list(ct_data[[group_var]], ct_data$tar_nm))
 
   ct_data <- mapply(FUN = function(x, y, z) {
-    setNames(object = list(x,
-                           y,
-                           length(z$ct),
-                           length(na.omit(z$ct)),
-                           ifelse(use_geomean,
-                                  ifelse(is.nan(exp(mean(log(z$ct), na.rm = T))),
-                                         NA_real_,
-                                         exp(mean(log(z$ct), na.rm = T))),
-                                  ifelse(is.nan(mean(z$ct, na.rm = T)),
-                                         NA_real_,
-                                         mean(z$ct, na.rm = T))),
-                           sd(z$ct, na.rm = T)),
-             nm = c(group_var, "tar_nm", "n_rep", "n_filt_rep", "mean_ct", "sd_ct"))
+    stats::setNames(object = list(x,
+                                  y,
+                                  length(z$ct),
+                                  length(stats::na.omit(z$ct)),
+                                  ifelse(use_geomean,
+                                         ifelse(is.nan(exp(mean(log(z$ct), na.rm = T))),
+                                                NA_real_,
+                                                exp(mean(log(z$ct), na.rm = T))),
+                                         ifelse(is.nan(mean(z$ct, na.rm = T)),
+                                                NA_real_,
+                                                mean(z$ct, na.rm = T))),
+                                  stats::sd(z$ct, na.rm = T)),
+                    nm = c(group_var, "tar_nm", "n_rep", "n_filt_rep", "mean_ct", "stats::sd_ct"))
   },
   data_sample_ids, data_tar_nms, ct_data,
   SIMPLIFY = F)
@@ -85,16 +83,16 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
   raw_data <- cbind(split(x = data,
                           f = list(data[[group_var]], data$tar_nm)))
 
-  raw_data <- setNames(object = data.frame(group_var = data_sample_ids,
-                                           tar_nm = data_tar_nms,
-                                           raw_data = raw_data),
-                       nm = c(group_var, "tar_nm", "raw_data"))
+  raw_data <- stats::setNames(object = data.frame(group_var = data_sample_ids,
+                                                  tar_nm = data_tar_nms,
+                                                  raw_data = raw_data),
+                              nm = c(group_var, "tar_nm", "raw_data"))
 
   # Merge ct_data and raw_data into data
 
   data <- merge(ct_data, raw_data, all = T)
 
-  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct")]
+  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "stats::sd_ct")]
 
   data <- data[order(data[[group_var]], data$tar_nm), , drop = F]
 
