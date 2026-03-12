@@ -20,7 +20,7 @@ compute_fold_change(
 
 \item{group_var}{character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".}
 
-\item{ct_var}{character vector of length 1. Name of the column containing the Ct values. Default is "mean_id".}
+\item{ct_var}{character vector of length 1. Name of the column containing the Ct values. Default is "mean_ct".}
 
 \item{ref_nm}{character vector. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.}
 

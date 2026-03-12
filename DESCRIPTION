@@ -7,7 +7,7 @@ Description: Convenience functions to import and analyse qPCR data produced by Q
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Imports: 
     readxl (>= 1.4.3)
 URL: https://github.com/benvallin/qPCRwm
