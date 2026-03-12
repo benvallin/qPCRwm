@@ -6,7 +6,7 @@
 #' @param group_var character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".
 #' @param use_geomean logical vector of length 1. Indicates whether to compute geometric mean instead of arithmetic mean. Default is FALSE.
 #'
-#' @return A data.frame with 7 columns: group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct" and "sd_ct".
+#' @return A data.frame with 8 columns: group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct" and "cv_pct_ct".
 #'
 #' @export
 #'
@@ -46,7 +46,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
                       each = length(unique(data[[group_var]])))
 
   # Construct ct_data
-  # => Compute arithmetic / geometric mean and stats::sd of Ct values across technical replicates
+  # => Compute arithmetic / geometric mean, SD and CV% of Ct values across technical replicates
 
   ct_data <- data[, c(group_var, "tar_nm", "ct")]
 
@@ -75,6 +75,8 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
   ct_data <- Reduce(f = function(...) { merge(..., all = TRUE) },
                     x = ct_data)
 
+  ct_data$cv_pct_ct <- (ct_data$sd_ct / ct_data$mean_ct) * 100
+
   # Construct raw_data
 
   raw_data <- cbind(split(x = data,
@@ -89,7 +91,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
 
   data <- merge(ct_data, raw_data, all = TRUE)
 
-  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct")]
+  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct", "cv_pct_ct")]
 
   data <- data[order(data[[group_var]], data$tar_nm), , drop = FALSE]
 

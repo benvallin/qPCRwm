@@ -14,7 +14,7 @@ compute_mean_ct(data, group_var = "sample_id", use_geomean = FALSE)
 \item{use_geomean}{logical vector of length 1. Indicates whether to compute geometric mean instead of arithmetic mean. Default is FALSE.}
 }
 \value{
-A data.frame with 7 columns: group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct" and "sd_ct".
+A data.frame with 8 columns: group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct" and "cv_pct_ct".
 }
 \description{
 compute_mean_ct() calculates the arithmetic or geometric mean of Ct values, provided a data.frame and a grouping variable.
