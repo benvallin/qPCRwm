@@ -3,14 +3,11 @@
 #'import_amp() tidies the "Amplification Data" sheet of an .xls file produced by QuantStudio Design & Analysis Software v1.5.2 or StepOne Software v2.3.
 #'
 #' @param file character vector of length 1. Path to the .xls file containing the qPCR results to import.
-#' @param from character vector of length 1. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".
+#' @param from character vector of length 1 or name. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".
 #'
 #' @return A tibble with 4 columns: "well_position", "sample_id", "tar_nm", "cycle", "rn", and "delta_rn".
 #'
 #' @export
-#'
-#' @importFrom readxl read_excel
-#' @importFrom stats setNames
 #'
 #' @examples
 #'
@@ -18,9 +15,11 @@ import_amp <- function(file, from = "QuantStudio") {
 
   # Capture user's arguments
 
-  file <- eval(expr = substitute(file), envir = parent.frame())
+  file <- eval(substitute(file))
 
-  from <- eval(expr = substitute(from), envir = parent.frame())
+  from <- substitute(from)
+
+  from <- ifelse(is.symbol(from), deparse(from), eval(from))
 
   # Stop execution in case of invalid input
 
@@ -41,9 +40,9 @@ import_amp <- function(file, from = "QuantStudio") {
   invalid_file <- vapply(X = c("Amplification Data", "Results"),
                          FUN = function(x) {
                            unique(class(try(expr = match(x = "Well",
-                                                         table = suppressMessages(expr = read_excel(path = file,
-                                                                                                    sheet = x))[[1]]),
-                                            silent = T)) == "try-error") },
+                                                         table = suppressMessages(expr = readxl::read_excel(path = file,
+                                                                                                            sheet = x))[[1]]),
+                                            silent = TRUE)) == "try-error") },
                          FUN.VALUE = vector(mode = "logical", length = 1L))
 
   if (any(invalid_file)) {
@@ -52,8 +51,8 @@ import_amp <- function(file, from = "QuantStudio") {
 
   skip <- vapply(X = c("Amplification Data", "Results"),
                  FUN = function(x) { match(x = "Well",
-                                           table = suppressMessages(expr = read_excel(path = file,
-                                                                                      sheet = x))[[1]]) },
+                                           table = suppressMessages(expr = readxl::read_excel(path = file,
+                                                                                              sheet = x))[[1]]) },
                  FUN.VALUE = vector(mode = "integer", length = 1L))
 
   if (any(is.na(skip))) {
@@ -62,13 +61,13 @@ import_amp <- function(file, from = "QuantStudio") {
 
   # Read qPCR results file
 
-  amp_data <- suppressMessages(expr = read_excel(path = file,
-                                                 sheet = "Amplification Data",
-                                                 skip = skip[["Amplification Data"]]))
+  amp_data <- suppressMessages(expr = readxl::read_excel(path = file,
+                                                         sheet = "Amplification Data",
+                                                         skip = skip[["Amplification Data"]]))
 
-  sample_data <- suppressMessages(expr = read_excel(path = file,
-                                                    sheet = "Results",
-                                                    skip = skip[["Results"]]))
+  sample_data <- suppressMessages(expr = readxl::read_excel(path = file,
+                                                            sheet = "Results",
+                                                            skip = skip[["Results"]]))
 
   # Tidy QuantStudio input
 
@@ -86,11 +85,11 @@ import_amp <- function(file, from = "QuantStudio") {
       stop("\nThe \"Results\" sheet in the input file does not contain one or more required column(s).\n")
     }
 
-    amp_data <- setNames(object = amp_data[, c("Well Position", "Cycle", "Target Name", "Rn", "Delta Rn")],
-                         nm = c("well_position", "cycle", "tar_nm", "rn", "delta_rn"))
+    amp_data <- stats::setNames(object = amp_data[, c("Well Position", "Cycle", "Target Name", "Rn", "Delta Rn")],
+                                nm = c("well_position", "cycle", "tar_nm", "rn", "delta_rn"))
 
-    sample_data <- setNames(object = sample_data[, c("Well Position", "Sample Name", "Target Name")],
-                            nm = c("well_position", "sample_id", "tar_nm"))
+    sample_data <- stats::setNames(object = sample_data[, c("Well Position", "Sample Name", "Target Name")],
+                                   nm = c("well_position", "sample_id", "tar_nm"))
 
   }
 
@@ -110,21 +109,21 @@ import_amp <- function(file, from = "QuantStudio") {
       stop("\nThe \"Results\" sheet in the input file does not contain one or more required column(s).\n")
     }
 
-    amp_data <- setNames(object = amp_data[, c("Well", "Cycle", "Target Name", "Rn", paste0("\u0394", "Rn"))],
-                         nm = c("well_position", "cycle", "tar_nm", "rn", "delta_rn"))
+    amp_data <- stats::setNames(object = amp_data[, c("Well", "Cycle", "Target Name", "Rn", paste0("\u0394", "Rn"))],
+                                nm = c("well_position", "cycle", "tar_nm", "rn", "delta_rn"))
 
-    sample_data <- setNames(object = sample_data[, c("Well", "Sample Name", "Target Name")],
-                            nm = c("well_position", "sample_id", "tar_nm"))
+    sample_data <- stats::setNames(object = sample_data[, c("Well", "Sample Name", "Target Name")],
+                                   nm = c("well_position", "sample_id", "tar_nm"))
 
   }
 
   # Merge amplification and sample ID data and tidy final output
 
-  data <- merge(amp_data, sample_data, all = T)
+  data <- merge(amp_data, sample_data, all = TRUE)
 
   data <- data[!is.na(data$sample_id), c("well_position", "sample_id", "tar_nm", "cycle", "rn", "delta_rn")]
 
-  data <- data[order(data$sample_id, data$tar_nm, data$cycle), , drop = F]
+  data <- data[order(data$sample_id, data$tar_nm, data$cycle), , drop = FALSE]
 
   return(data)
 

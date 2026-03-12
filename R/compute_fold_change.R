@@ -3,19 +3,17 @@
 #'compute_fold_change() calculates gene expression fold changes, provided a data.frame, a grouping variable, a calibrator sample and one or more reference gene(s).
 #'
 #' @param data data.frame / tibble. Must contain the columns group_var, "tar_nm" and ct_var.
-#' @param group_var character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".
-#' @param ct_var character vector of length 1. Name of the column containing the Ct values. Default is "mean_ct".
-#' @param ref_nm character vector. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.
-#' @param cal_nm character vector of length 1. Name of the sample to use as calibrator. Must be in the group_var column of the input data.frame.
-#' @param method character vector of length 1. Indicates which method to use for computation of gene expression fold changes. Valid values are "ddct" or "Pfaffl".
+#' @param group_var character vector of length 1 or name. Name of the column to use as grouping variable. Default is "sample_id".
+#' @param ct_var character vector of length 1 or name. Name of the column containing the Ct values. Default is "mean_ct".
+#' @param ref_nm character vector or name. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.
+#' @param cal_nm character vector of length 1 or name. Name of the sample to use as calibrator. Must be in the group_var column of the input data.frame.
+#' @param method character vector of length 1 or name. Indicates which method to use for computation of gene expression fold changes. Valid values are "ddct" or "Pfaffl".
 #' @param use_geomean logical vector of length 1. Indicates whether to use geometric mean instead of arithmetic mean for computing the mean of multiple reference genes Ct values. Ignored if method is "Pfaffl". Default is FALSE.
 #' @param efficiencies data.frame / tibble. Table with gene-specific primer efficiencies. Must contain the columns "tar_nm" and "efficiency", and one entry for each gene in the "tar_nm" column of the input data.frame. Ignored if method is "ddct". If missing and method is "Pfaffl", efficiency is set to 2 for every gene.
 #'
 #' @return A data.frame of variable length: 10 (ddct method), 12 (Pfaffl method and multiple ref_nm), or 14 (Pfaffl method and single ref_nm). Gene expression fold changes are stored in the "fold_change" column.
 #'
 #' @export
-#'
-#' @importFrom stats setNames
 #'
 #' @examples
 #'
@@ -30,25 +28,49 @@ compute_fold_change <- function(data,
 
   # Capture user's arguments
 
-  data <- eval(expr = substitute(data), envir = parent.frame())
+  data <- eval(substitute(data))
 
-  group_var <- eval(expr = substitute(group_var), envir = parent.frame())
+  group_var <- substitute(group_var)
 
-  ct_var <- eval(expr = substitute(ct_var), envir = parent.frame())
+  group_var <- ifelse(is.symbol(group_var), deparse(group_var), eval(group_var))
 
-  ref_nm <- eval(expr = substitute(ref_nm), envir = parent.frame())
+  ct_var <- substitute(ct_var)
 
-  cal_nm <- eval(expr = substitute(cal_nm), envir = parent.frame())
+  ct_var <- ifelse(is.symbol(ct_var), deparse(ct_var), eval(ct_var))
 
-  method <- eval(expr = substitute(method), envir = parent.frame())
+  ref_nm <- substitute(ref_nm)
 
-  use_geomean <- eval(expr = substitute(use_geomean), envir = parent.frame())
+  if(is.call(ref_nm)) {
 
-  efficiencies <- eval(expr = substitute(efficiencies), envir = parent.frame())
+    for(i in seq_along(ref_nm)[2:length(ref_nm)]) {
+      ref_nm[[i]] <- ifelse(is.symbol(ref_nm[[i]]),
+                            deparse(ref_nm[[i]]),
+                            eval(ref_nm[[i]]))
+    }
+
+    ref_nm <- eval(ref_nm)
+
+  } else {
+
+    ref_nm <- ifelse(is.symbol(ref_nm), deparse(ref_nm), eval(ref_nm))
+
+  }
+
+  cal_nm <- substitute(cal_nm)
+
+  cal_nm <- ifelse(is.symbol(cal_nm), deparse(cal_nm), eval(cal_nm))
+
+  method <- substitute(method)
+
+  method <- ifelse(is.symbol(method), deparse(method), eval(cal_nm))
+
+  use_geomean <- eval(substitute(use_geomean))
+
+  efficiencies <- eval(substitute(efficiencies))
 
   # Determine if quantification includes a single or multiple reference gene(s)
 
-  multi_ref_nm <- ifelse(length(ref_nm) > 1L, T, F)
+  multi_ref_nm <- ifelse(length(ref_nm) > 1L, TRUE, FALSE)
 
   # Stop execution in case of invalid input
 
@@ -116,7 +138,7 @@ compute_fold_change <- function(data,
     }
   }
 
-  if (!use_geomean %in% c(T, F)) {
+  if (!use_geomean %in% c(TRUE, FALSE)) {
     stop("\nuse_geomean value must be a logical TRUE or FALSE.\n")
   }
 
@@ -147,15 +169,15 @@ compute_fold_change <- function(data,
 
     ref_ct_data <- lapply(X = ref_ct_data,
                           FUN = function(x) {
-                            setNames(object = list(x[[group_var]][[1]],
-                                                   paste0(ref_nm, collapse = " / "),
-                                                   ifelse(use_geomean,
-                                                          exp(mean(log(x[[ct_var]]))),
-                                                          mean(x[[ct_var]]))),
-                                     nm = c(group_var, "tar_nm", ct_var))
+                            stats::setNames(object = list(x[[group_var]][[1]],
+                                                          paste0(ref_nm, collapse = " / "),
+                                                          ifelse(use_geomean,
+                                                                 exp(mean(log(x[[ct_var]]))),
+                                                                 mean(x[[ct_var]]))),
+                                            nm = c(group_var, "tar_nm", ct_var))
                           })
 
-    ref_ct_data <- Reduce(f = function(...) { merge(..., all = T) },
+    ref_ct_data <- Reduce(f = function(...) { merge(..., all = TRUE) },
                           x = ref_ct_data)
 
   } else {
@@ -164,7 +186,7 @@ compute_fold_change <- function(data,
 
   }
 
-  ct_data <- merge(tar_ct_data, ref_ct_data, all = T)
+  ct_data <- merge(tar_ct_data, ref_ct_data, all = TRUE)
 
   if (method == "ddct") {
 
@@ -172,17 +194,17 @@ compute_fold_change <- function(data,
 
     fc_data <- lapply(X = names(tar_ct_data),
                       FUN = function(x) {
-                        setNames(object = list(x,
-                                               tar_ct_data[[x]]$tar_nm,
-                                               paste0(ref_nm, collapse = " / "),
-                                               tar_ct_data[[x]][[ct_var]] - ref_ct_data[ref_ct_data[[group_var]] == x, ct_var]),
-                                 nm = c(group_var, "tar_nm", "ref_nm", "delta_ct"))
+                        stats::setNames(object = list(x,
+                                                      tar_ct_data[[x]]$tar_nm,
+                                                      paste0(ref_nm, collapse = " / "),
+                                                      tar_ct_data[[x]][[ct_var]] - ref_ct_data[ref_ct_data[[group_var]] == x, ct_var]),
+                                        nm = c(group_var, "tar_nm", "ref_nm", "delta_ct"))
                       })
 
-    tar_ct_data <- Reduce(f = function(...) { merge(..., all = T) },
+    tar_ct_data <- Reduce(f = function(...) { merge(..., all = TRUE) },
                           x = tar_ct_data)
 
-    fc_data <- Reduce(f = function(...) { merge(..., all = T) },
+    fc_data <- Reduce(f = function(...) { merge(..., all = TRUE) },
                       x = fc_data)
 
     fc_data$delta_delta_ct <- fc_data$delta_ct - fc_data[fc_data[[group_var]] == cal_nm, "delta_ct"]
@@ -194,14 +216,14 @@ compute_fold_change <- function(data,
     fc_data$log2_fold_change <- log(x = fc_data$fold_change, base = 2)
 
     fc_data <- merge(fc_data,
-                     setNames(object = ct_data[ct_data$tar_nm %in% unique(fc_data$tar_nm),],
-                              nm = c(group_var, "tar_nm", paste0("tar_", ct_var))),
-                     all = T)
+                     stats::setNames(object = ct_data[ct_data$tar_nm %in% unique(fc_data$tar_nm),],
+                                     nm = c(group_var, "tar_nm", paste0("tar_", ct_var))),
+                     all = TRUE)
 
     fc_data <- merge(fc_data,
-                     setNames(object = ct_data[ct_data$tar_nm %in% unique(fc_data$ref_nm),],
-                              nm = c(group_var, "ref_nm", paste0("ref_", ct_var))),
-                     all = T)
+                     stats::setNames(object = ct_data[ct_data$tar_nm %in% unique(fc_data$ref_nm),],
+                                     nm = c(group_var, "ref_nm", paste0("ref_", ct_var))),
+                     all = TRUE)
 
     fc_data <- fc_data[, c(group_var, "tar_nm", "ref_nm", paste0("tar_", ct_var), paste0("ref_", ct_var),
                            "delta_ct", "delta_delta_ct", "two_power_minus_delta_delta_ct", "fold_change", "log2_fold_change")]
@@ -221,12 +243,12 @@ compute_fold_change <- function(data,
 
     tar_rq_data$tar_delta_ct <- tar_rq_data[tar_rq_data[[group_var]] == cal_nm, ct_var] - tar_rq_data[[ct_var]]
 
-    tar_rq_data <- merge(tar_rq_data, efficiencies, all.x = T)
+    tar_rq_data <- merge(tar_rq_data, efficiencies, all.x = TRUE)
 
     tar_rq_data$eff_power_tar_delta_ct <- tar_rq_data$efficiency ^ tar_rq_data$tar_delta_ct
 
-    tar_rq_data <- setNames(object = tar_rq_data[, c(group_var, "tar_nm", ct_var, "tar_delta_ct", "efficiency", "eff_power_tar_delta_ct")],
-                            nm = c(group_var, "tar_nm", paste0("tar_", ct_var), "tar_delta_ct", "tar_efficiency", "eff_power_tar_delta_ct"))
+    tar_rq_data <- stats::setNames(object = tar_rq_data[, c(group_var, "tar_nm", ct_var, "tar_delta_ct", "efficiency", "eff_power_tar_delta_ct")],
+                                   nm = c(group_var, "tar_nm", paste0("tar_", ct_var), "tar_delta_ct", "tar_efficiency", "eff_power_tar_delta_ct"))
 
     if (multi_ref_nm) {
 
@@ -234,7 +256,7 @@ compute_fold_change <- function(data,
 
       indiv_ref_rq_data$ref_delta_ct <- indiv_ref_rq_data[indiv_ref_rq_data[[group_var]] == cal_nm, ct_var] - indiv_ref_rq_data[[ct_var]]
 
-      indiv_ref_rq_data <- merge(indiv_ref_rq_data, efficiencies, all.x = T)
+      indiv_ref_rq_data <- merge(indiv_ref_rq_data, efficiencies, all.x = TRUE)
 
       indiv_ref_rq_data$eff_power_ref_delta_ct <- indiv_ref_rq_data$efficiency ^ indiv_ref_rq_data$ref_delta_ct
 
@@ -242,13 +264,13 @@ compute_fold_change <- function(data,
 
       ref_rq_data <- lapply(X = names(ref_rq_data),
                             FUN = function(x) {
-                              setNames(object = list(x,
-                                                     paste0(ref_nm, collapse = " / "),
-                                                     exp(mean(log(ref_rq_data[[x]]$eff_power_ref_delta_ct)))),
-                                       nm = c(group_var, "ref_nm", "geomean_eff_power_ref_delta_ct"))
+                              stats::setNames(object = list(x,
+                                                            paste0(ref_nm, collapse = " / "),
+                                                            exp(mean(log(ref_rq_data[[x]]$eff_power_ref_delta_ct)))),
+                                              nm = c(group_var, "ref_nm", "geomean_eff_power_ref_delta_ct"))
                             })
 
-      ref_rq_data <- Reduce(f = function(...) { merge(..., all = T) },
+      ref_rq_data <- Reduce(f = function(...) { merge(..., all = TRUE) },
                             x = ref_rq_data)
 
       indiv_ref_rq_data <- split(x = indiv_ref_rq_data,
@@ -256,19 +278,19 @@ compute_fold_change <- function(data,
 
       indiv_ref_rq_data <- lapply(X = indiv_ref_rq_data,
                                   FUN = function(x) {
-                                    setNames(object = x[, c("tar_nm", ct_var, "ref_delta_ct", "efficiency", "eff_power_ref_delta_ct")],
-                                             nm = c("ref_nm", paste0("ref_", ct_var), "ref_delta_ct", "ref_efficiency", "eff_power_ref_delta_ct"))
+                                    stats::setNames(object = x[, c("tar_nm", ct_var, "ref_delta_ct", "efficiency", "eff_power_ref_delta_ct")],
+                                                    nm = c("ref_nm", paste0("ref_", ct_var), "ref_delta_ct", "ref_efficiency", "eff_power_ref_delta_ct"))
                                   })
 
       indiv_ref_rq_data <- cbind(indiv_ref_rq_data)
 
-      indiv_ref_rq_data <- setNames(object = data.frame(group_var = rownames(indiv_ref_rq_data),
-                                                        ref_data = indiv_ref_rq_data),
-                                    nm = c(group_var, "ref_data"))
+      indiv_ref_rq_data <- stats::setNames(object = data.frame(group_var = rownames(indiv_ref_rq_data),
+                                                               ref_data = indiv_ref_rq_data),
+                                           nm = c(group_var, "ref_data"))
 
-      ref_rq_data <- merge(ref_rq_data, indiv_ref_rq_data, all = T)
+      ref_rq_data <- merge(ref_rq_data, indiv_ref_rq_data, all = TRUE)
 
-      fc_data <- merge(tar_rq_data, ref_rq_data, all = T)
+      fc_data <- merge(tar_rq_data, ref_rq_data, all = TRUE)
 
       fc_data$eff_power_tar_delta_ct_over_geomean_eff_power_ref_delta_ct <- fc_data$eff_power_tar_delta_ct / fc_data$geomean_eff_power_ref_delta_ct
 
@@ -287,14 +309,14 @@ compute_fold_change <- function(data,
 
       ref_rq_data$ref_delta_ct <- ref_rq_data[ref_rq_data[[group_var]] == cal_nm, ct_var] - ref_rq_data[[ct_var]]
 
-      ref_rq_data <- merge(ref_rq_data, efficiencies, all.x = T)
+      ref_rq_data <- merge(ref_rq_data, efficiencies, all.x = TRUE)
 
       ref_rq_data$eff_power_ref_delta_ct <- ref_rq_data$efficiency ^ ref_rq_data$ref_delta_ct
 
-      ref_rq_data <- setNames(object = ref_rq_data[, c(group_var, "tar_nm", ct_var, "ref_delta_ct", "efficiency", "eff_power_ref_delta_ct")],
-                              nm = c(group_var, "ref_nm", paste0("ref_", ct_var), "ref_delta_ct", "ref_efficiency", "eff_power_ref_delta_ct"))
+      ref_rq_data <- stats::setNames(object = ref_rq_data[, c(group_var, "tar_nm", ct_var, "ref_delta_ct", "efficiency", "eff_power_ref_delta_ct")],
+                                     nm = c(group_var, "ref_nm", paste0("ref_", ct_var), "ref_delta_ct", "ref_efficiency", "eff_power_ref_delta_ct"))
 
-      fc_data <- merge(tar_rq_data, ref_rq_data, all = T)
+      fc_data <- merge(tar_rq_data, ref_rq_data, all = TRUE)
 
       fc_data$eff_power_tar_delta_ct_over_eff_power_ref_delta_ct <- fc_data$eff_power_tar_delta_ct / fc_data$eff_power_ref_delta_ct
 
@@ -309,7 +331,7 @@ compute_fold_change <- function(data,
 
     }
 
-    fc_data <- fc_data[order(fc_data[[group_var]], fc_data$tar_nm), , drop = F]
+    fc_data <- fc_data[order(fc_data[[group_var]], fc_data$tar_nm), , drop = FALSE]
 
   }
 

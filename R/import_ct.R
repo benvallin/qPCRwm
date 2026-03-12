@@ -3,14 +3,11 @@
 #'import_ct() tidies the "Results" sheet of an .xls file produced by QuantStudio Design & Analysis Software v1.5.2 or StepOne Software v2.3.
 #'
 #' @param file character vector of length 1. Path to the .xls file containing the qPCR results to import.
-#' @param from character vector of length 1. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".
+#' @param from character vector of length 1 or name. Indicates which qPCR software the input file originates from. Valid values are "QuantStudio" or "StepOne".
 #'
 #' @return A tibble with 4 columns: "well_position", "sample_id", "tar_nm", and "ct".
 #'
 #' @export
-#'
-#' @importFrom readxl read_excel
-#' @importFrom stats setNames
 #'
 #' @examples
 #'
@@ -18,9 +15,11 @@ import_ct <- function(file, from = "QuantStudio") {
 
   # Capture user's arguments
 
-  file <- eval(expr = substitute(file), envir = parent.frame())
+  file <- eval(substitute(file))
 
-  from <- eval(expr = substitute(from), envir = parent.frame())
+  from <- substitute(from)
+
+  from <- ifelse(is.symbol(from), deparse(from), eval(from))
 
   # Stop execution in case of invalid input
 
@@ -38,19 +37,19 @@ import_ct <- function(file, from = "QuantStudio") {
   }
 
   invalid_file <- unique(class(try(expr = match(x = "Well",
-                                                table = suppressMessages(expr = read_excel(path = file,
+                                                table = suppressMessages(expr = readxl::read_excel(path = file,
                                                                                            sheet = "Results"))[[1]]),
-                                   silent = T)) == "try-error")
+                                   silent = TRUE)) == "try-error")
 
   if (invalid_file) {
     stop("\nThe input file is not valid.\n")
   }
 
   skip <- match(x = "Well",
-                table = suppressMessages(expr = read_excel(path = file,
+                table = suppressMessages(expr = readxl::read_excel(path = file,
                                                            sheet = "Results"))[[1]])
 
-  missing_well_column <- ifelse(is.na(skip), T, F)
+  missing_well_column <- ifelse(is.na(skip), TRUE, FALSE)
 
   if (missing_well_column) {
     stop("\nThe \"Results\" sheet in the input file does not contain the required \"Well\" column.\n")
@@ -58,7 +57,7 @@ import_ct <- function(file, from = "QuantStudio") {
 
   # Read qPCR results file
 
-  data <- suppressMessages(expr = read_excel(path = file,
+  data <- suppressMessages(expr = readxl::read_excel(path = file,
                                              sheet = "Results",
                                              skip = skip))
 
@@ -74,7 +73,7 @@ import_ct <- function(file, from = "QuantStudio") {
       }
     }
 
-    data <- setNames(object = data[, c("Well Position", "Sample Name", "Target Name", "CT")],
+    data <- stats::setNames(object = data[, c("Well Position", "Sample Name", "Target Name", "CT")],
                      nm = c("well_position", "sample_id", "tar_nm", "ct"))
 
   }
@@ -91,7 +90,7 @@ import_ct <- function(file, from = "QuantStudio") {
       }
     }
 
-    data <- setNames(object = data[c(1L:(nrow(data)-5L)), c("Well", "Sample Name", "Target Name", paste0("C", "\u1D1B"))],
+    data <- stats::setNames(object = data[c(1L:(nrow(data)-5L)), c("Well", "Sample Name", "Target Name", paste0("C", "\u1D1B"))],
                      nm = c("well_position", "sample_id", "tar_nm", "ct"))
 
   }
