@@ -3,11 +3,11 @@
 #'compute_fold_change() calculates gene expression fold changes, provided a data.frame, a grouping variable, a calibrator sample and one or more reference gene(s).
 #'
 #' @param data data.frame / tibble. Must contain the columns group_var, "tar_nm" and ct_var.
-#' @param group_var character vector of length 1 or name. Name of the column to use as grouping variable. Default is "sample_id".
-#' @param ct_var character vector of length 1 or name. Name of the column containing the Ct values. Default is "mean_ct".
-#' @param ref_nm character vector or name. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.
-#' @param cal_nm character vector of length 1 or name. Name of the sample to use as calibrator. Must be in the group_var column of the input data.frame.
-#' @param method character vector of length 1 or name. Indicates which method to use for computation of gene expression fold changes. Valid values are "ddct" or "Pfaffl".
+#' @param group_var character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".
+#' @param ct_var character vector of length 1. Name of the column containing the Ct values. Default is "mean_ct".
+#' @param ref_nm character vector. Name(s) of the gene(s) to use as reference gene(s). All ref_nm elements must be in the "tar_nm" column of the input data.frame.
+#' @param cal_nm character vector of length 1. Name of the sample to use as calibrator. Must be in the group_var column of the input data.frame.
+#' @param method character vector of length 1. Indicates which method to use for computation of gene expression fold changes. Valid values are "ddct" or "Pfaffl".
 #' @param use_geomean logical vector of length 1. Indicates whether to use geometric mean instead of arithmetic mean for computing the mean of multiple reference genes Ct values. Ignored if method is "Pfaffl". Default is FALSE.
 #' @param efficiencies data.frame / tibble. Table with gene-specific primer efficiencies. Must contain the columns "tar_nm" and "efficiency", and one entry for each gene in the "tar_nm" column of the input data.frame. Ignored if method is "ddct". If missing and method is "Pfaffl", efficiency is set to 2 for every gene.
 #'
@@ -30,39 +30,15 @@ compute_fold_change <- function(data,
 
   data <- eval(substitute(data))
 
-  group_var <- substitute(group_var)
+  group_var <- eval(substitute(group_var))
 
-  group_var <- ifelse(is.symbol(group_var), deparse(group_var), eval(group_var))
+  ct_var <- eval(substitute(ct_var))
 
-  ct_var <- substitute(ct_var)
+  ref_nm <- eval(substitute(ref_nm))
 
-  ct_var <- ifelse(is.symbol(ct_var), deparse(ct_var), eval(ct_var))
+  cal_nm <- eval(substitute(cal_nm))
 
-  ref_nm <- substitute(ref_nm)
-
-  if(is.call(ref_nm)) {
-
-    for(i in seq_along(ref_nm)[2:length(ref_nm)]) {
-      ref_nm[[i]] <- ifelse(is.symbol(ref_nm[[i]]),
-                            deparse(ref_nm[[i]]),
-                            eval(ref_nm[[i]]))
-    }
-
-    ref_nm <- eval(ref_nm)
-
-  } else {
-
-    ref_nm <- ifelse(is.symbol(ref_nm), deparse(ref_nm), eval(ref_nm))
-
-  }
-
-  cal_nm <- substitute(cal_nm)
-
-  cal_nm <- ifelse(is.symbol(cal_nm), deparse(cal_nm), eval(cal_nm))
-
-  method <- substitute(method)
-
-  method <- ifelse(is.symbol(method), deparse(method), eval(cal_nm))
+  method <- eval(substitute(method))
 
   use_geomean <- eval(substitute(use_geomean))
 
@@ -75,85 +51,105 @@ compute_fold_change <- function(data,
   # Stop execution in case of invalid input
 
   if (length(group_var) != 1 || !is.character(group_var)) {
-    stop("\ngroup_var value must be a character vector of length 1.\n")
+    stop("group_var value must be a character vector of length 1.",
+         call. = FALSE)
   }
 
   if (length(ct_var) != 1 || !is.character(ct_var)) {
-    stop("\nct_var value must be a character vector of length 1.\n")
+    stop("ct_var value must be a character vector of length 1.",
+         call. = FALSE)
   }
 
   if (!is.data.frame(data) || !all(c(group_var, "tar_nm", ct_var) %in% colnames(data))) {
-    stop("\ndata must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"", ct_var, "\".\n")
+    stop("data must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"", ct_var, "\".",
+         call. = FALSE)
   }
 
   if (any(is.na(data[[group_var]]))) {
-    stop("\nThe group_var column in the input data must contain only non-NA values.\n")
+    stop("The group_var column in the input data must contain only non-NA values.",
+         call. = FALSE)
   }
 
   if (!is.character(data[[group_var]])) {
-    stop("\nThe group_var column in the input data must be of class character.\n")
+    stop("The group_var column in the input data must be of class character.",
+         call. = FALSE)
   }
 
   if (!is.numeric(data[[ct_var]])) {
-    stop("\nThe ct_var column in the input data must be of class numeric.\n")
+    stop("The ct_var column in the input data must be of class numeric.",
+         call. = FALSE)
   }
 
   if (any(is.na(data$tar_nm))) {
-    stop("\nThe \"tar_nm\" column in the input data must contain only non-NA values.\n")
+    stop("The \"tar_nm\" column in the input data must contain only non-NA values.",
+         call. = FALSE)
   }
 
   if (!is.character(data$tar_nm)) {
-    stop("\nThe \"tar_nm\" column in the input data must be of class character.\n")
+    stop("The \"tar_nm\" column in the input data must be of class character.",
+         call. = FALSE)
   }
 
   if (!is.character(ref_nm)) {
-    stop("\nref_nm value must be a character vector.\n")
+    stop("ref_nm value must be a character vector.",
+         call. = FALSE)
   }
 
   if (!all(ref_nm %in% data$tar_nm)) {
-    stop("\nref_nm value(s) must be in the \"tar_nm\" column of the input data.\n")
+    stop("ref_nm value(s) must be in the \"tar_nm\" column of the input data.",
+         call. = FALSE)
   }
 
   if (length(cal_nm) != 1 || !is.character(cal_nm)) {
-    stop("\ncal_nm value must be a character vector of length 1.\n")
+    stop("cal_nm value must be a character vector of length 1.",
+         call. = FALSE)
   }
 
   if (!cal_nm %in% data[[group_var]]) {
-    stop("\ncal_nm value must be in the \"", group_var, "\" column of the input data.\n")
+    stop("cal_nm value must be in the \"", group_var, "\" column of the input data.",
+         call. = FALSE)
   }
 
   if (length(method) != 1L || !method %in% c("ddct", "Pfaffl")) {
-    stop("\nmethod value must be \"ddct\" or \"Pfaffl\".\n")
+    stop("method value must be \"ddct\" or \"Pfaffl\".",
+         call. = FALSE)
   }
 
   if (!is.null(efficiencies)) {
     if (!is.data.frame(efficiencies) || !all(c("tar_nm", "efficiency") %in% colnames(efficiencies))) {
-      stop("\nefficiencies must be a dataframe containing the columns \"tar_nm\" and \"efficiency\".\n")
+      stop("efficiencies must be a dataframe containing the columns \"tar_nm\" and \"efficiency\".",
+           call. = FALSE)
     }
     if (!all(data$tar_nm %in% efficiencies$tar_nm)) {
-      stop("\nThe input efficiencies table does not contain an efficiency value for every tar_nm.\n")
+      stop("The input efficiencies table does not contain an efficiency value for every tar_nm.",
+           call. = FALSE)
     }
     if (!is.numeric(efficiencies$efficiency)) {
-      stop("\nThe \"efficiency\" column of efficiencies must be of class numeric.\n")
+      stop("The \"efficiency\" column of efficiencies must be of class numeric.",
+           call. = FALSE)
     }
   }
 
   if (!use_geomean %in% c(TRUE, FALSE)) {
-    stop("\nuse_geomean value must be a logical TRUE or FALSE.\n")
+    stop("use_geomean value must be a logical TRUE or FALSE.",
+         call. = FALSE)
   }
 
   # Message in case of ignored argument
 
   if (method == "ddct" && !is.null(efficiencies)) {
-    message("\nThe \"ddct\" method is incompatible with primer-specific efficiencies.\nProvided efficiencies will be ignored.\n")
+    message("\nThe \"ddct\" method is incompatible with primer-specific efficiencies.\nProvided efficiencies will be ignored.",
+            call. = FALSE)
   }
 
   if (use_geomean && !multi_ref_nm) {
-    message("\nThe use_geomean argument serves only in case of multiple reference genes.\nuse_geomean = TRUE will be ignored.\n")
+    message("\nThe use_geomean argument serves only in case of multiple reference genes.\nuse_geomean = TRUE will be ignored.",
+            call. = FALSE)
   }
 
   if (use_geomean && multi_ref_nm && method == "Pfaffl") {
-    message("\nThe use_geomean argument is not used by the \"Pfaffl\" method (does not compute the mean of multiple reference genes Ct values).\nuse_geomean = TRUE will be ignored.\n")
+    message("\nThe use_geomean argument is not used by the \"Pfaffl\" method (does not compute the mean of multiple reference genes Ct values).\nuse_geomean = TRUE will be ignored.",
+            call. = FALSE)
   }
 
   # Isolate Ct values for target and references genes, respectively

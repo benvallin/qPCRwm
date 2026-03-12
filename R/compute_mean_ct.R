@@ -3,7 +3,7 @@
 #'compute_mean_ct() calculates the arithmetic or geometric mean of Ct values, provided a data.frame and a grouping variable.
 #'
 #' @param data data.frame / tibble. Must contain the columns group_var, "tar_nm" and "ct".
-#' @param group_var character vector of length 1 or name. Name of the column to use as grouping variable. Default is "sample_id".
+#' @param group_var character vector of length 1. Name of the column to use as grouping variable. Default is "sample_id".
 #' @param use_geomean logical vector of length 1. Indicates whether to compute geometric mean instead of arithmetic mean. Default is FALSE.
 #'
 #' @return A data.frame with 7 columns: group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct" and "sd_ct".
@@ -18,9 +18,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
 
   data <- eval(substitute(data))
 
-  group_var <- substitute(group_var)
-
-  group_var <- if(is.symbol(group_var)) deparse(group_var) else eval(group_var)
+  group_var <- eval(substitute(group_var))
 
   use_geomean <- eval(substitute(use_geomean))
 
@@ -29,22 +27,22 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
   if(!is.character(group_var) ||
      length(group_var) != 1L) {
     stop("Invalid group_var argument.",
-         call. = F)
+         call. = FALSE)
   }
 
   if (!is.data.frame(data) || !all(c(group_var, "tar_nm", "ct") %in% colnames(data))) {
-    stop("\ndata must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"ct\".",
-         call. = F)
+    stop("data must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"ct\".",
+         call. = FALSE)
   }
 
   if (any(is.na(data[[group_var]]))) {
-    stop("\nThe group_var column in the input data must contain only non-NA values.",
-         call. = F)
+    stop("The group_var column in the input data must contain only non-NA values.",
+         call. = FALSE)
   }
 
   if (!use_geomean %in% c(TRUE, FALSE)) {
-    stop("\nuse_geomean value must be a logical TRUE or FALSE.",
-         call. = F)
+    stop("use_geomean value must be a logical TRUE or FALSE.",
+         call. = FALSE)
   }
 
   # Construct group_var and tar_nm values for final output
