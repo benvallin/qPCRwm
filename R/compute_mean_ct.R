@@ -70,7 +70,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
                                                 NA_real_,
                                                 mean(z$ct, na.rm = T))),
                                   stats::sd(z$ct, na.rm = T)),
-                    nm = c(group_var, "tar_nm", "n_rep", "n_filt_rep", "mean_ct", "stats::sd_ct"))
+                    nm = c(group_var, "tar_nm", "n_rep", "n_filt_rep", "mean_ct", "sd_ct"))
   },
   data_sample_ids, data_tar_nms, ct_data,
   SIMPLIFY = F)
@@ -92,7 +92,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
 
   data <- merge(ct_data, raw_data, all = T)
 
-  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "stats::sd_ct")]
+  data <- data[, c(group_var, "tar_nm", "raw_data", "n_rep", "n_filt_rep", "mean_ct", "sd_ct")]
 
   data <- data[order(data[[group_var]], data$tar_nm), , drop = F]
 
