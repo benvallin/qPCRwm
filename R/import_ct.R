@@ -91,7 +91,7 @@ import_ct <- function(file, from = "QuantStudio") {
       }
     }
 
-    data <- stats::setNames(object = data[c(1L:(nrow(data)-5L)), c("Well", "Sample Name", "Target Name", paste0("C", "\u1D1B"))],
+    data <- stats::setNames(object = data[c(1L:(nrow(data)-5L)), c("Well", "Sample Name", "Target Name", paste0("C", "\u0442"))],
                             nm = c("well_position", "sample_id", "tar_nm", "ct"))
 
   }
