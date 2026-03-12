@@ -20,7 +20,7 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
 
   group_var <- substitute(group_var)
 
-  group_var <- ifelse(is.symbol(group_var), deparse(group_var), eval(group_var))
+  group_var <- if(is.symbol(group_var)) deparse(group_var) else eval(group_var)
 
   use_geomean <- eval(substitute(use_geomean))
 
