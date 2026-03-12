@@ -26,20 +26,25 @@ compute_mean_ct <- function(data, group_var = "sample_id", use_geomean = FALSE) 
 
   # Stop execution in case of invalid input
 
-  if (length(group_var) != 1 || !is.character(group_var)) {
-    stop("\ngroup_var value must be a character vector of length 1.\n")
+  if(!is.character(group_var) ||
+     length(group_var) != 1L) {
+    stop("Invalid group_var argument.",
+         call. = F)
   }
 
   if (!is.data.frame(data) || !all(c(group_var, "tar_nm", "ct") %in% colnames(data))) {
-    stop("\ndata must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"ct\".\n")
+    stop("\ndata must be a dataframe containing the columns \"", group_var, "\", \"tar_nm\" and \"ct\".",
+         call. = F)
   }
 
   if (any(is.na(data[[group_var]]))) {
-    stop("\nThe group_var column in the input data must contain only non-NA values.\n")
+    stop("\nThe group_var column in the input data must contain only non-NA values.",
+         call. = F)
   }
 
   if (!use_geomean %in% c(TRUE, FALSE)) {
-    stop("\nuse_geomean value must be a logical TRUE or FALSE.\n")
+    stop("\nuse_geomean value must be a logical TRUE or FALSE.",
+         call. = F)
   }
 
   # Construct group_var and tar_nm values for final output
